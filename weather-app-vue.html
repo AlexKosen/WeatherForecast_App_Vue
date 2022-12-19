@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather-app-vue</title>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.min.js"></script>
+
+</head>
+
+<body>
+    <script>
+        window.onload = function () {
+            let sample = new Vue({
+                el: '#app',
+
+                data: {
+                    cities: [
+                        {
+                            city: "Kyiv",
+                            adress: "latitude=49.43&longitude=32.04",
+                        },
+                        {
+                            city: "Berlin",
+                            adress: "latitude=52.52&longitude=13.41",
+                        },
+                        {
+                            city: "Paris",
+                            adress: "latitude=48.85&longitude=2.35",
+                        },
+                        {
+                            city: "London",
+                            adress: "latitude=51.51&longitude=-0.13",
+                        },
+                        {
+                            city: "New York",
+                            adress: "latitude=40.71&longitude=-74.01",
+                        },
+                        {
+                            city: "Washington",
+                            adress: "latitude=38.90&longitude=-77.04",
+                        },
+
+                    ],
+                    responseWeather: [],
+                    selectCities: [],
+                    newCities: [],
+                    showCurrentCity: true,
+                    sellCity: false,
+                    showBtnKeep: false,
+                },
+
+
+                methods: {
+                    showWeather: function (cityAdress, nameCity, dataWeather = 0) {
+                        let url = `https://api.open-meteo.com/v1/forecast?${cityAdress}&daily=temperature_2m_max,temperature_2m_min&current_weather=true&timezone=Europe%2FBerlin`;
+                        fetch(url)
+                            .then(response => {
+                                if (response.ok)
+                                    return response.json();
+                                else throw new Error(`Ошибка загрузки, код ${response.status}`)
+                            })
+                            .then(json => {
+                                this.responseWeather.push([nameCity, json.daily.temperature_2m_min[dataWeather],
+                                    json.daily.temperature_2m_max[dataWeather], json.daily.time[dataWeather]]);
+                            })
+                    },
+                    showWeatherSelCity: function () {
+                        this.showCurrentCity = false;
+                        this.sellCity = true;
+                        this.newCities = [];
+                        if (this.selectCities.length == 0) {
+                                    alert("Please, enter city!" );
+                                    this.resetWeather()
+                                }
+                        for (let city of this.responseWeather) {
+                            for (newCity of this.selectCities) {
+                                if (city[0] === newCity) {
+                                    this.newCities.push([city[0], city[1], city[2], city[3]]);
+                                }
+                            }
+                        }
+                        this.selectCities = [];
+                    },
+
+                    resetWeather: function () {
+                        this.sellCity = false;
+                        this.showCurrentCity = true;
+                        this.showBtnKeep = false;
+                        this.newCities = [];
+                    },
+
+                },
+
+                created: function () {
+                    for (let cityAdr of this.cities) {
+                        this.showWeather(cityAdr.adress, cityAdr.city)
+                    }
+                },
+
+            })
+        }
+
+    </script>
+
+    <div id="app" class="app">
+        <div class="wrapper">
+        <p>
+            <h1>Weather forecast</h1>
+        </p>
+        <table>
+            <th>City</th>
+            <th>MinTemp C°</th>
+            <th>MaxTemp C°</th>
+            <th>WeatherDate</th>
+            <tr v-if="showCurrentCity" v-for="(city, index) in responseWeather" :key="index">
+                <td>{{city[0]}}</td>
+                <td>{{city[1]}}</td>
+                <td>{{city[2]}}</td>
+                <td>{{city[3]}}</td>
+            </tr>
+
+            <tr v-if="sellCity" v-for="(nCity, index) in newCities" :key="index">
+                <td>{{nCity[0]}}</td>
+                <td>{{nCity[1]}}</td>
+                <td>{{nCity[2]}}</td>
+                <td>{{nCity[3]}}</td>
+            </tr>
+
+        </table>
+
+        <form class="select-town">
+            <select v-model="selectCities" multiple class="form-control">
+                <option v-for="(city, index) in cities" v-bind:value="city.city">{{city.city}}</option>
+            </select>
+        </form>
+        <div class="btn">
+            <button v-on:click="showWeatherSelCity">Keep</button>
+            <button v-on:click="resetWeather">Reset</button>
+        </div>
+    </div>
+    </div>
+
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: rgb(224, 237, 236);
+        }
+        .app {
+            max-width: 70%;
+            /* margin: auto; */
+        }
+        p, h1 {
+            text-align: center;
+        }
+
+        .wrapper {
+            max-width: 100%;
+
+        }
+        table {
+            width: 100%;
+            margin: 5px;
+         }
+        table,
+        th,
+        td {
+            border: 1px solid black;
+            margin: 0 auto;
+        }
+
+        td,
+        th {
+            padding: 8px;
+        }
+
+        select {
+            margin-top: 5px;
+            width: 200px;
+            height: 50px;
+            background-color:rgb(224, 237, 236);
+        }
+
+        .btn {
+            width: 200px;
+            margin-top: 15px;
+            display: flex;
+            justify-content: space-between;
+            
+        }
+
+        .select-town {
+            margin-top: 20px;
+            width: 200px;
+            height: 50px;
+        }
+
+        select > option:checked{
+            box-shadow: 0 0 10px 100px rgb(79, 195, 187) inset;
+}
+
+        button {
+            width: 90px;
+            height: 35px;
+            cursor: pointer;
+            background-color: rgb(150, 179, 177);
+            border: 0;
+            border-radius: 3px;
+        }
+        button:hover {
+            background-color: rgb(79, 195, 187)
+        }
+    </style>
+</body>
+
+
+</html>
